@@ -6,4 +6,4 @@ def test_create_student():
     response = lambda_handler({}, {})
 
     assert response["statusCode"] == 201
-    assert response["body"] == "Student Created"
+    assert response["body"] == "Student Created _"
