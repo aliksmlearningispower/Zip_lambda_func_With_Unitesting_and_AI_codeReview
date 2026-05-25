@@ -1,0 +1,106 @@
+name: Lambda CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  review-and-build:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          pip install groq
+          pip install pytest
+
+      - name: Fetch Main Branch
+        run: |
+          git fetch origin main:main
+
+      # ------------------
+      # AI CODE REVIEW
+      # ------------------
+
+      - name: Run Review
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python Myproject_folder/review_code.py
+
+      - name: Add Comment To PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const review = fs.readFileSync('review.txt', 'utf8');
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: review
+            });
+
+      # ------------------
+      # UNIT TESTS
+      # ------------------
+
+      - name: Run Unit Tests
+        run: |
+          pytest tests -v
+
+      # ------------------
+      # CREATE ZIPS
+      # ------------------
+
+      - name: Create Deploy Folder
+        run: mkdir -p deploy_packages
+
+      - name: Zip Create Student
+        run: |
+          cd create_student
+          zip -r ../deploy_packages/create_student.zip .
+
+      - name: Zip Read Student
+        run: |
+          cd read_student
+          zip -r ../deploy_packages/read_student.zip .
+
+      - name: Zip Update Student
+        run: |
+          cd update_student
+          zip -r ../deploy_packages/update_student.zip .
+
+      - name: Zip Delete Student
+        run: |
+          cd delete_student
+          zip -r ../deploy_packages/delete_student.zip .
+
+      # ------------------
+      # STORE ZIPS
+      # ------------------
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-packages
+          path: deploy_packages/
