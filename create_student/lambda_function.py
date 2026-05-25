@@ -1,5 +1,5 @@
 def lambda_handler(event, context):
     return {
         "statusCode": 201,
-        "body": "Student Created _"
+        "body": "Student Created "
     }
