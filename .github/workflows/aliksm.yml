@@ -31,10 +31,29 @@ jobs:
         run: |
           pip install groq
           pip install pytest
+      
+      - name: Show Project Structure
+        run: |
+          pwd
+          ls -R
+
+      - name: Check Python Path
+        run: |
+          python -c "import sys; print(sys.path)"
 
       - name: Fetch Main Branch
         run: |
           git fetch origin main:main
+          
+      # ------------------
+      # UNIT TESTS
+      # ------------------
+
+      - name: Run Unit Tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest tests -v
 
       # ------------------
       # AI CODE REVIEW
@@ -60,13 +79,7 @@ jobs:
               body: review
             });
 
-      # ------------------
-      # UNIT TESTS
-      # ------------------
-
-      - name: Run Unit Tests
-        run: |
-          pytest tests -v
+      
 
       # ------------------
       # CREATE ZIPS
